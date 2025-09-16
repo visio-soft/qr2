@@ -1,0 +1,19 @@
+{
+    "name": "QR Code Scanner",
+    "short_name": "QR Scanner",
+    "description": "Real-time QR code scanner for mobile Chrome browsers",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f5f5f5",
+    "theme_color": "#3498db",
+    "icons": [
+        {
+            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjMzQ5OGRiIi8+CjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSJ3aGl0ZSIvPgo8cmVjdCB4PSIxMjgiIHk9IjE2IiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IndoaXRlIi8+CjxyZWN0IHg9IjE2IiB5PSIxMjgiIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgZmlsbD0id2hpdGUiLz4KPHN2Zz4K",
+            "sizes": "192x192",
+            "type": "image/svg+xml"
+        }
+    ],
+    "orientation": "portrait",
+    "scope": "/",
+    "categories": ["utilities", "productivity"]
+}

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#3498db">
+    <title>QR Code Scanner</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" onerror="console.log('html5-qrcode library failed to load')"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="scanner-container">
+            <h1>QR Code Scanner</h1>
+            <div id="reader"></div>
+            <div id="camera-controls" class="camera-controls hidden">
+                <button id="switch-camera" class="btn-icon" title="Switch Camera">
+                    📷
+                </button>
+            </div>
+            <div id="result" class="result-container hidden">
+                <h2>QR Code Detected!</h2>
+                <div id="qr-result"></div>
+                <button id="scan-again" class="btn">Scan Again</button>
+            </div>
+            <div id="error-message" class="error-message hidden"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script src="fallback-scanner.js"></script>
+</body>
+</html>
