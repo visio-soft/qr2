@@ -11,6 +11,8 @@ class SimpleQRScanner {
         this.context = null;
         this.isScanning = false;
         this.scanInterval = null;
+        this.currentFacingMode = 'environment'; // Start with back camera
+        this.availableCameras = [];
         
         this.initializeElements();
         this.bindEvents();
@@ -23,11 +25,17 @@ class SimpleQRScanner {
         this.qrResultElement = document.getElementById('qr-result');
         this.scanAgainButton = document.getElementById('scan-again');
         this.errorMessageElement = document.getElementById('error-message');
+        this.cameraControlsElement = document.getElementById('camera-controls');
+        this.switchCameraButton = document.getElementById('switch-camera');
     }
     
     bindEvents() {
         this.scanAgainButton.addEventListener('click', () => {
             this.resetScanner();
+        });
+        
+        this.switchCameraButton.addEventListener('click', () => {
+            this.switchCamera();
         });
     }
     
@@ -35,6 +43,10 @@ class SimpleQRScanner {
         try {
             // Clear any existing content first to prevent duplicates
             this.readerElement.innerHTML = '';
+            
+            // Get available cameras
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            this.availableCameras = devices.filter(device => device.kind === 'videoinput');
             
             // Create video element
             this.video = document.createElement('video');
@@ -54,7 +66,7 @@ class SimpleQRScanner {
             // Get camera stream
             const constraints = {
                 video: {
-                    facingMode: { ideal: 'environment' }, // Prefer back camera
+                    facingMode: { ideal: this.currentFacingMode },
                     width: { ideal: 1280 },
                     height: { ideal: 720 }
                 }
@@ -70,11 +82,49 @@ class SimpleQRScanner {
             
             this.hideError();
             
+            // Show camera controls if multiple cameras are available
+            if (this.availableCameras.length > 1) {
+                this.showCameraControls();
+            }
+            
         } catch (err) {
             console.error('Error setting up camera:', err);
             // Show demo mode instead of error
             this.showDemoMode();
         }
+    }
+    
+    async switchCamera() {
+        if (!this.availableCameras || this.availableCameras.length <= 1) {
+            return; // No cameras to switch to
+        }
+        
+        try {
+            // Stop current stream
+            if (this.stream) {
+                this.stream.getTracks().forEach(track => track.stop());
+            }
+            
+            // Switch camera facing mode
+            this.currentFacingMode = this.currentFacingMode === 'environment' ? 'user' : 'environment';
+            
+            // Restart camera with new facing mode
+            await this.setupCamera();
+            
+            console.log(`Switched to ${this.currentFacingMode === 'environment' ? 'back' : 'front'} camera`);
+        } catch (err) {
+            console.error('Error switching camera:', err);
+            this.showError(`Error switching camera: ${err.message || err}`);
+        }
+    }
+    
+    showCameraControls() {
+        this.cameraControlsElement.classList.remove('hidden');
+        this.readerElement.style.position = 'relative';
+    }
+    
+    hideCameraControls() {
+        this.cameraControlsElement.classList.add('hidden');
     }
     
     showDemoMode() {
@@ -126,6 +176,9 @@ class SimpleQRScanner {
         
         this.readerElement.appendChild(demoContainer);
         this.hideError();
+        
+        // Show camera switch button in demo mode to demonstrate the feature
+        this.showCameraControls();
     }
     
     startScanning() {
@@ -215,6 +268,7 @@ class SimpleQRScanner {
         this.qrResultElement.textContent = text;
         this.resultElement.classList.remove('hidden');
         this.readerElement.style.display = 'none';
+        this.hideCameraControls();
     }
     
     async resetScanner() {

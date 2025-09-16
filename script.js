@@ -2,6 +2,9 @@ class QRCodeScanner {
     constructor() {
         this.html5QrCode = null;
         this.isScanning = false;
+        this.currentCameraId = null;
+        this.availableCameras = [];
+        this.currentCameraIndex = 0;
         this.config = {
             fps: 10,
             qrbox: { width: 250, height: 250 },
@@ -19,11 +22,17 @@ class QRCodeScanner {
         this.qrResultElement = document.getElementById('qr-result');
         this.scanAgainButton = document.getElementById('scan-again');
         this.errorMessageElement = document.getElementById('error-message');
+        this.cameraControlsElement = document.getElementById('camera-controls');
+        this.switchCameraButton = document.getElementById('switch-camera');
     }
     
     bindEvents() {
         this.scanAgainButton.addEventListener('click', () => {
             this.resetScanner();
+        });
+        
+        this.switchCameraButton.addEventListener('click', () => {
+            this.switchCamera();
         });
     }
     
@@ -32,14 +41,15 @@ class QRCodeScanner {
             this.html5QrCode = new Html5Qrcode("reader");
             
             // Get camera devices
-            const devices = await Html5Qrcode.getCameras();
+            this.availableCameras = await Html5Qrcode.getCameras();
             
-            if (devices && devices.length) {
-                // Prefer back camera for mobile devices
-                const cameraId = this.getPreferredCamera(devices);
+            if (this.availableCameras && this.availableCameras.length) {
+                // Prefer back camera for mobile devices (set as default)
+                this.currentCameraIndex = this.getPreferredCameraIndex();
+                this.currentCameraId = this.availableCameras[this.currentCameraIndex].id;
                 
                 await this.html5QrCode.start(
-                    cameraId,
+                    this.currentCameraId,
                     this.config,
                     (decodedText, decodedResult) => {
                         this.onScanSuccess(decodedText, decodedResult);
@@ -52,6 +62,11 @@ class QRCodeScanner {
                 
                 this.isScanning = true;
                 this.hideError();
+                
+                // Show camera controls if multiple cameras are available
+                if (this.availableCameras.length > 1) {
+                    this.showCameraControls();
+                }
             } else {
                 this.showError('No cameras found on this device.');
             }
@@ -61,6 +76,17 @@ class QRCodeScanner {
         }
     }
     
+    getPreferredCameraIndex() {
+        // Try to find back camera first (better for QR scanning)
+        const backCameraIndex = this.availableCameras.findIndex(device => 
+            device.label.toLowerCase().includes('back') || 
+            device.label.toLowerCase().includes('rear') ||
+            device.label.toLowerCase().includes('environment')
+        );
+        
+        return backCameraIndex !== -1 ? backCameraIndex : 0;
+    }
+
     getPreferredCamera(devices) {
         // Try to find back camera first (better for QR scanning)
         const backCamera = devices.find(device => 
@@ -70,6 +96,49 @@ class QRCodeScanner {
         );
         
         return backCamera ? backCamera.id : devices[0].id;
+    }
+    
+    async switchCamera() {
+        if (!this.availableCameras || this.availableCameras.length <= 1) {
+            return; // No cameras to switch to
+        }
+        
+        try {
+            // Stop current scanner
+            await this.stopScanner();
+            
+            // Switch to next camera
+            this.currentCameraIndex = (this.currentCameraIndex + 1) % this.availableCameras.length;
+            this.currentCameraId = this.availableCameras[this.currentCameraIndex].id;
+            
+            // Start scanner with new camera
+            await this.html5QrCode.start(
+                this.currentCameraId,
+                this.config,
+                (decodedText, decodedResult) => {
+                    this.onScanSuccess(decodedText, decodedResult);
+                },
+                (errorMessage) => {
+                    console.log(`Scan failed: ${errorMessage}`);
+                }
+            );
+            
+            this.isScanning = true;
+            console.log(`Switched to camera: ${this.availableCameras[this.currentCameraIndex].label}`);
+        } catch (err) {
+            console.error('Error switching camera:', err);
+            this.showError(`Error switching camera: ${err.message || err}`);
+        }
+    }
+    
+    showCameraControls() {
+        this.cameraControlsElement.classList.remove('hidden');
+        // Position controls relative to the reader element
+        this.readerElement.style.position = 'relative';
+    }
+    
+    hideCameraControls() {
+        this.cameraControlsElement.classList.add('hidden');
     }
     
     async onScanSuccess(decodedText, decodedResult) {
@@ -97,6 +166,7 @@ class QRCodeScanner {
         this.qrResultElement.textContent = text;
         this.resultElement.classList.remove('hidden');
         this.readerElement.style.display = 'none';
+        this.hideCameraControls();
     }
     
     async resetScanner() {
@@ -114,7 +184,7 @@ class QRCodeScanner {
             }
         }
         
-        // Restart scanning
+        // Restart scanning with the same camera
         await this.startScanner();
     }
     
