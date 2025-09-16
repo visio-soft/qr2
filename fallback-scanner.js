@@ -33,6 +33,9 @@ class SimpleQRScanner {
     
     async setupCamera() {
         try {
+            // Clear any existing content first to prevent duplicates
+            this.readerElement.innerHTML = '';
+            
             // Create video element
             this.video = document.createElement('video');
             this.video.style.width = '100%';
@@ -219,10 +222,17 @@ class SimpleQRScanner {
         this.readerElement.style.display = 'block';
         this.hideError();
         
-        // Clear previous video
-        if (this.video) {
-            this.video.remove();
+        // Clear all previous content from reader element to prevent duplicates
+        this.readerElement.innerHTML = '';
+        
+        // Stop any existing streams
+        if (this.stream) {
+            this.stream.getTracks().forEach(track => track.stop());
+            this.stream = null;
         }
+        
+        // Clear video reference
+        this.video = null;
         
         // Restart camera
         await this.setupCamera();
@@ -244,6 +254,12 @@ class SimpleQRScanner {
 
 // Try to use Html5Qrcode if available, otherwise fall back to simple scanner
 document.addEventListener('DOMContentLoaded', () => {
+    // Only initialize if the main scanner hasn't been initialized
+    if (window.scannerInitialized === true) {
+        console.log('Main scanner already initialized, skipping fallback');
+        return;
+    }
+    
     // Check browser support
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         document.getElementById('error-message').textContent = 
@@ -252,14 +268,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
-    // Try to use Html5Qrcode if available
-    if (typeof Html5Qrcode !== 'undefined') {
-        console.log('Using Html5Qrcode library');
-        window.qrScanner = new QRCodeScanner();
-    } else {
-        console.log('Html5Qrcode not available, using simple scanner');
-        window.qrScanner = new SimpleQRScanner();
-    }
+    // Use simple scanner as fallback
+    console.log('Html5Qrcode not available, using simple scanner');
+    window.qrScanner = new SimpleQRScanner();
+    window.scannerInitialized = true;
 });
 
 // Handle page visibility changes

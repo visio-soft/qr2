@@ -150,8 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof Html5Qrcode !== 'undefined') {
         console.log('Using Html5Qrcode library');
         window.qrScanner = new QRCodeScanner();
+        window.scannerInitialized = true; // Flag to prevent fallback initialization
     } else {
         console.log('Html5Qrcode not available, fallback scanner will be initialized');
+        window.scannerInitialized = false; // Let fallback scanner initialize
     }
 });
 
